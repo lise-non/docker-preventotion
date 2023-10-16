@@ -1,0 +1,34 @@
+# Utilisez une image de base PHP avec Apache
+FROM php:8.2-apache
+
+# Activez le module Apache mod_rewrite (pour les URLs propres de Laravel)
+RUN a2enmod rewrite
+
+# Installez les dépendances nécessaires pour Laravel
+RUN apt-get update && apt-get install -y \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libzip-dev \
+    zip \
+    unzip
+
+# Activez les extensions PHP requises pour Laravel
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg
+RUN docker-php-ext-install gd pdo pdo_mysql zip
+
+# Définissez le répertoire de travail dans le conteneur
+WORKDIR /var/www/html
+
+# Copiez le reste de votre application Laravel
+COPY . .
+
+# Installez les dépendances Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+RUN composer install
+
+# Exposez le port par défaut d'Apache (80)
+EXPOSE 81
+
+# Commande pour exécuter Apache (avec l'option -D FOREGROUND pour qu'Apache s'exécute en premier plan)
+CMD ["apache2-foreground"]
